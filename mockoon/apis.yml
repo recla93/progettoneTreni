@@ -1,0 +1,88 @@
+openapi: 3.0.0
+info:
+  title: Railway Mock API
+  version: 1.0.0
+paths:
+  /rolling-stock-service/trains:
+    get:
+      summary: Lista treni
+      responses:
+        '200':
+          description: Lista di treni
+          content:
+            application/json:
+              example:
+                - id: 1
+                  code: IC123
+                  name: Freccia Rossa
+
+  /rolling-stock-service/trains/{id}:
+    get:
+      summary: Dettaglio treno
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dettaglio treno
+          content:
+            application/json:
+              example:
+                id: 1
+                code: IC123
+                name: Freccia Rossa
+                coaches: []
+
+  /stations-routes-service/stations:
+    get:
+      summary: Lista stazioni
+      responses:
+        '200':
+          description: Lista stazioni
+          content:
+            application/json:
+              example:
+                - id: 1
+                  code: FIR
+
+  /timetable-service/trips/search:
+    get:
+      summary: Cerca viaggi
+      responses:
+        '200':
+          description: Lista viaggi
+          content:
+            application/json:
+              example:
+                - tripId: 77
+
+  /pricing-service/pricing/quote:
+    post:
+      summary: Calcola preventivo
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: Risultato preventivo
+          content:
+            application/json:
+              example:
+                currency: EUR
+                total: 72.40
+
+  /booking-service/bookings:
+    post:
+      summary: Nuova prenotazione
+      requestBody:
+        required: false
+      responses:
+        '201':
+          description: Prenotazione creata
+          content:
+            application/json:
+              example:
+                bookingId: 99
+                status: NEW

@@ -1,0 +1,189 @@
+version: '3.8'
+
+volumes:
+  mysql_data:
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports: ["3310:3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports: ["8761:8761"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761"]
+      interval: 10s
+      retries: 5
+
+  gateway:
+    build: ./gateway
+    container_name: api-gateway
+    ports: ["8080:8080"]
+    environment:
+     SPRING_APPLICATION_JSON: |
+      {
+        "spring.application.name": "api-gateway",
+        "server.port": 8080,
+        "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka",
+        "eureka.instance.prefer-ip-address": true,
+        "spring.cloud.discovery.enabled": true,
+        "spring.cloud.gateway.discovery.locator.enabled": true,
+        "spring.cloud.gateway.discovery.locator.lower-case-service-id": true,
+        "spring.cloud.gateway.globalcors.add-to-simple-url-handler-mapping": true,
+        "spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedOrigins": "*",
+        "spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedMethods": "GET,POST,PUT,DELETE,OPTIONS",
+        "spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedHeaders": "*",
+        "management.endpoints.web.exposure.include": "*",
+        "management.endpoint.health.probes.enabled": true,
+        "management.health.livenessState.enabled": true,
+        "management.health.readinessState.enabled": true
+      }
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      retries: 5
+    restart: on-failure
+
+  rolling-stock-service:
+    build: ./services/rolling-stock-service
+    container_name: rolling-stock-service
+    ports:
+    - "8083:8083"   
+    environment:
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.application.name": "rolling-stock-service",
+          "server.port": 8083,
+          "spring.datasource.url": "jdbc:mysql://mysql:3306/rolling_stock?createDatabaseIfNotExist=true&useSSL=false",
+          "spring.datasource.username": "root",
+          "spring.datasource.password": "root",
+          "spring.jpa.hibernate.ddl-auto": "update",
+          "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka"
+        }
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+
+  stations-routes-service:
+    build: ./services/stations-routes-service
+    container_name: stations-routes-service
+    environment:
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.application.name": "stations-routes-service",
+          "server.port": 8084,
+          "spring.datasource.url": "jdbc:mysql://mysql:3306/stations_routes?createDatabaseIfNotExist=true&useSSL=false",
+          "spring.datasource.username": "root",
+          "spring.datasource.password": "root",
+          "spring.jpa.hibernate.ddl-auto": "update",
+          "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka"
+        }
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+
+  timetable-service:
+    build: ./services/timetable-service
+    container_name: timetable-service
+    environment:
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.application.name": "timetable-service",
+          "server.port": 8085,
+          "spring.datasource.url": "jdbc:mysql://mysql:3306/timetable?createDatabaseIfNotExist=true&useSSL=false",
+          "spring.datasource.username": "root",
+          "spring.datasource.password": "root",
+          "spring.jpa.hibernate.ddl-auto": "update",
+          "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka"
+        }
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+
+  pricing-service:
+    build: ./services/pricing-service
+    container_name: pricing-service
+    environment:
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.application.name": "pricing-service",
+          "server.port": 8086,
+          "spring.datasource.url": "jdbc:mysql://mysql:3306/pricing?createDatabaseIfNotExist=true&useSSL=false",
+          "spring.datasource.username": "root",
+          "spring.datasource.password": "root",
+          "spring.jpa.hibernate.ddl-auto": "update",
+          "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka"
+        }
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+
+  booking-service:
+    build: ./services/booking-service
+    container_name: booking-service
+    environment:
+      SPRING_APPLICATION_JSON: |
+        {
+          "spring.application.name": "booking-service",
+          "server.port": 8087,
+          "spring.datasource.url": "jdbc:mysql://mysql:3306/booking?createDatabaseIfNotExist=true&useSSL=false",
+          "spring.datasource.username": "root",
+          "spring.datasource.password": "root",
+          "spring.jpa.hibernate.ddl-auto": "update",
+          "eureka.client.service-url.defaultZone": "http://eureka-server:8761/eureka"
+        }
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    container_name: angular-frontend
+    ports: ["4200:80"]
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+  mockoon:
+    image: mockoon/cli:latest
+    container_name: mockoon
+    volumes:
+      - ./mockoon/trenibelli.json:/data/trenibelli.json
+    ports:
+      - "3000:3000"
+    command: -d /data/trenibelli.json -p 3000
+
