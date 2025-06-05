@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/stations-routes-service")
 public class StationsRoutesMockController {
 
     @GetMapping("/stations")

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/timetable-service")
 public class TimetableMockController {
 
     @GetMapping("/trips/search")

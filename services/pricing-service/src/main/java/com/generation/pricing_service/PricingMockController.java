@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/pricing-service")
 public class PricingMockController {
 
     @PostMapping("/pricing/quote")

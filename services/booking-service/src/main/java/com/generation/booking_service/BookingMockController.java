@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/booking-service")
 public class BookingMockController {
 
     @PostMapping("/bookings")
